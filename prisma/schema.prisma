@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id               String   @id @default(cuid())
+  roomId           Int
+  roomName         String
+  start            DateTime
+  end              DateTime
+  durationMs       BigInt
+  priceAmd         Int
+  pricePerHourAmd  Int
+  createdAt        DateTime @default(now())
+}
+
+model RoomPrice {
+  roomId      Int    @id
+  pricePerHour Int
+  updatedAt   DateTime @default(now()) @updatedAt
+}
+

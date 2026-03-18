@@ -17,6 +17,7 @@ model Session {
   priceAmd         Int
   pricePerHourAmd  Int
   paidByCard       Boolean  @default(false)
+  cashCollected    Boolean  @default(false)
   createdAt        DateTime @default(now())
 }
 

@@ -25,7 +25,47 @@ const WORKING_DAY_START_HOUR = 6; // 06:00
 const STORAGE_KEYS = {
   vercracList: "gameclub-vercrac-list",
   pahacList: "gameclub-pahac-list",
+  runningSessions: "gameclub-running-sessions",
+  paidRooms: "gameclub-paid-rooms",
+  hookahRooms: "gameclub-hookah-rooms",
 } as const;
+
+/** Sum of amounts taken for in-progress sessions marked as paid (green cash icon). When end time is set, uses the agreed amount (e.g. 1h = 1000 AMD); otherwise current elapsed. */
+function getInProgressPaidSum(): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const rawRunning = window.localStorage.getItem(STORAGE_KEYS.runningSessions);
+    const rawPaid = window.localStorage.getItem(STORAGE_KEYS.paidRooms);
+    const rawHookah = window.localStorage.getItem(STORAGE_KEYS.hookahRooms);
+    const paidRoomIds = rawPaid ? (JSON.parse(rawPaid) as number[]) : [];
+    const hookahRoomIds = rawHookah ? (JSON.parse(rawHookah) as number[]) : [];
+    const hookahSet = new Set(hookahRoomIds);
+    if (!rawRunning || !Array.isArray(paidRoomIds) || paidRoomIds.length === 0) return 0;
+    const running = JSON.parse(rawRunning) as Record<
+      string,
+      { startTime: string; endTime: string | null; pricePerHour: number }
+    >;
+    if (!running || typeof running !== "object") return 0;
+    const now = Date.now();
+    let sum = 0;
+    for (const roomId of paidRoomIds) {
+      const s = running[String(roomId)];
+      if (!s?.startTime) continue;
+      const startMs = new Date(s.startTime).getTime();
+      // When end time is set: use agreed amount (full duration to end). Otherwise: use elapsed so far.
+      const elapsedMs = s.endTime
+        ? new Date(s.endTime).getTime() - startMs
+        : Math.max(0, now - startMs);
+      if (elapsedMs <= 0) continue;
+      const price = Number(((elapsedMs / 3600000) * (s.pricePerHour ?? 0)).toFixed(2));
+      const hookahAdd = hookahSet.has(roomId) ? 2000 : 0;
+      sum += price + hookahAdd;
+    }
+    return sum;
+  } catch {
+    return 0;
+  }
+}
 
 type ListItem = { id?: string; text: string; deleted?: boolean };
 
@@ -101,6 +141,9 @@ export default function AdminPage() {
   });
   const [historyVercracList, setHistoryVercracList] = useState<ListItem[]>([]);
   const [historyPahacList, setHistoryPahacList] = useState<ListItem[]>([]);
+  const [showDeletedVercrac, setShowDeletedVercrac] = useState(true);
+  const [showDeletedPahac, setShowDeletedPahac] = useState(true);
+  const [inProgressPaidSum, setInProgressPaidSum] = useState(0);
 
   // Load Վերցրած and Պահած for the selected day from localStorage (when on history tab)
   useEffect(() => {
@@ -119,6 +162,19 @@ export default function AdminPage() {
       setHistoryPahacList([]);
     }
   }, [filterDate]);
+
+  // Keep in-progress paid sum in sync with main app (running sessions + paid rooms in localStorage)
+  useEffect(() => {
+    if (adminTab !== "history") return;
+    const update = () => setInProgressPaidSum(getInProgressPaidSum());
+    update();
+    window.addEventListener("focus", update);
+    const id = setInterval(update, 2000);
+    return () => {
+      window.removeEventListener("focus", update);
+      clearInterval(id);
+    };
+  }, [adminTab]);
 
   // Load room prices from database
   const loadRoomPrices = useCallback(async () => {
@@ -401,6 +457,7 @@ export default function AdminPage() {
               <div className="flex flex-col gap-0.5">
                 <p className="text-sm font-semibold text-slate-800">
                   Cash: <span className="text-emerald-700">AMD {totalCash.toFixed(2)}</span>
+                  <span className="text-slate-600"> + (AMD {inProgressPaidSum.toFixed(0)})</span>
                 </p>
                 <p className="text-sm font-semibold text-slate-800">
                   Card: <span className="text-blue-600">AMD {totalCard.toFixed(2)}</span>
@@ -625,13 +682,33 @@ export default function AdminPage() {
         <aside className="relative z-10 hidden w-64 flex-shrink-0 flex-col border-l border-slate-200 bg-white/95 shadow-sm backdrop-blur-sm xl:flex">
           <div className="flex flex-1 flex-col gap-0 p-4">
             <section className="rounded-lg border border-slate-200 bg-slate-50/80 p-3">
-              <h2 className="text-lg font-semibold text-blue-600">Վերցրած</h2>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold text-blue-600">Վերցրած</h2>
+                <button
+                  type="button"
+                  onClick={() => setShowDeletedVercrac((prev) => !prev)}
+                  className="flex-shrink-0 rounded p-1 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                  aria-label={showDeletedVercrac ? "Hide deleted items" : "Show deleted items"}
+                  title={showDeletedVercrac ? "Hide deleted items" : "Show deleted items"}
+                >
+                  {showDeletedVercrac ? (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  )}
+                </button>
+              </div>
               <p className="mt-0.5 text-xs text-slate-500">
                 {filterDate ? `Day ${filterDate}` : "Select a date"}
               </p>
               {historyVercracList.length > 0 ? (
                 <ul className="mt-2 space-y-2 text-sm text-slate-600">
-                  {historyVercracList.map((item, i) => (
+                  {(showDeletedVercrac ? historyVercracList : historyVercracList.filter((item) => !item.deleted)).map((item, i) => (
                     <li key={item.id ?? i} className="border-b border-slate-100 pb-1.5 last:border-0 last:pb-0">
                       <span className={`font-medium text-slate-700 ${item.deleted ? "line-through opacity-60" : ""}`}>
                         {item.text}
@@ -644,13 +721,33 @@ export default function AdminPage() {
               )}
             </section>
             <section className="mt-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
-              <h2 className="text-lg font-semibold text-red-600">Պահած</h2>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold text-red-600">Պահած</h2>
+                <button
+                  type="button"
+                  onClick={() => setShowDeletedPahac((prev) => !prev)}
+                  className="flex-shrink-0 rounded p-1 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                  aria-label={showDeletedPahac ? "Hide deleted items" : "Show deleted items"}
+                  title={showDeletedPahac ? "Hide deleted items" : "Show deleted items"}
+                >
+                  {showDeletedPahac ? (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  )}
+                </button>
+              </div>
               <p className="mt-0.5 text-xs text-slate-500">
                 {filterDate ? `Day ${filterDate}` : "Select a date"}
               </p>
               {historyPahacList.length > 0 ? (
                 <ul className="mt-2 space-y-2 text-sm text-slate-600">
-                  {historyPahacList.map((item, i) => (
+                  {(showDeletedPahac ? historyPahacList : historyPahacList.filter((item) => !item.deleted)).map((item, i) => (
                     <li key={item.id ?? i} className="border-b border-slate-100 pb-1.5 last:border-0 last:pb-0">
                       <span className={`font-medium text-slate-700 ${item.deleted ? "line-through opacity-60" : ""}`}>
                         {item.text}

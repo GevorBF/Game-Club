@@ -20,6 +20,8 @@ export type HistoryEntry = {
   priceAmd: number;
   pricePerHourAmd: number;
   paidByCard?: boolean;
+  /** True when cash was marked as collected (green cash icon) on main screen. */
+  cashCollected?: boolean;
   createdAt?: string;
 };
 

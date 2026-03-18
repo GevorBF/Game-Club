@@ -109,10 +109,12 @@ export default function Home() {
   const [vercracDescription, setVercracDescription] = useState("");
   const [vercracList, setVercracList] = useState<{ id: string; text: string; deleted: boolean }[]>([]);
   const [vercracDeleteIndex, setVercracDeleteIndex] = useState<number | null>(null);
+  const [showDeletedVercrac, setShowDeletedVercrac] = useState(true);
   const [pahacModalOpen, setPahacModalOpen] = useState(false);
   const [pahacDescription, setPahacDescription] = useState("");
   const [pahacList, setPahacList] = useState<{ id: string; text: string; deleted: boolean }[]>([]);
   const [pahacDeleteIndex, setPahacDeleteIndex] = useState<number | null>(null);
+  const [showDeletedPahac, setShowDeletedPahac] = useState(true);
   const [isAdminRole, setIsAdminRole] = useState(false);
   const router = useRouter();
   const hasLoadedFromStorage = useRef(false);
@@ -467,6 +469,7 @@ export default function Home() {
           priceAmd: entry.priceAmd,
           pricePerHourAmd: entry.pricePerHourAmd,
           paidByCard: entry.paidByCard,
+          cashCollected: paidRooms.has(pendingStop.roomId),
         }),
       });
     } catch (err) {
@@ -523,11 +526,29 @@ export default function Home() {
     if (Number.isNaN(price) || price <= 0) return;
     const durationHours = price / room.pricePerHour;
     const newEndTime = new Date(room.startTime.getTime() + durationHours * 3600000);
-    setRooms((prev) =>
-      prev.map((r) =>
+    setRooms((prev) => {
+      const next = prev.map((r) =>
         r.id === editEndTimeRoomId ? { ...r, endTime: newEndTime } : r,
-      ),
-    );
+      );
+      if (typeof window !== "undefined") {
+        try {
+          const running: Record<string, { startTime: string; endTime: string | null; pricePerHour: number }> = {};
+          next.forEach((r) => {
+            if (r.isRunning && r.startTime) {
+              running[String(r.id)] = {
+                startTime: r.startTime.toISOString(),
+                endTime: r.endTime ? r.endTime.toISOString() : null,
+                pricePerHour: r.pricePerHour,
+              };
+            }
+          });
+          window.localStorage.setItem(STORAGE_KEYS.runningSessions, JSON.stringify(running));
+        } catch (e) {
+          console.warn("Failed to save running sessions", e);
+        }
+      }
+      return next;
+    });
     setEditEndTimeRoomId(null);
     setEditEndTimeValue("");
   };
@@ -647,12 +668,12 @@ export default function Home() {
             >
               <div className="relative mt-4 space-y-2 rounded-lg border border-slate-200 bg-white p-4">
                 <div
-                  className={`absolute inset-0 flex flex-col items-center justify-center gap-2 -translate-y-6 -translate-x-4 ${room.isRunning ? "pointer-events-auto" : "pointer-events-none"}`}
+                  className="absolute inset-0 flex flex-col items-center justify-center gap-2 -translate-y-6 -translate-x-4 pointer-events-none"
                 >
                   <button
                     type="button"
                     onClick={room.isRunning ? () => setTransferFromRoomId(room.id) : undefined}
-                    className={`flex flex-col items-center justify-center gap-2 ${room.isRunning ? "cursor-pointer rounded-lg transition hover:opacity-80" : "cursor-default"}`}
+                    className={`flex flex-col items-center justify-center gap-2 ${room.isRunning ? "pointer-events-auto cursor-pointer rounded-lg transition hover:opacity-80" : "cursor-default"}`}
                     aria-label="Transfer session to another room"
                   >
                     <p className="text-sm font-semibold uppercase tracking-wide text-slate-700">
@@ -777,7 +798,7 @@ export default function Home() {
                       }
                       className={`rounded p-1 transition hover:opacity-80 ${
                         paidRooms.has(room.id) ? "text-emerald-600" : "text-red-500"
-                      }`}
+                      } ${!(room.isRunning && room.endTime) ? "invisible pointer-events-none" : ""}`}
                       aria-label={paidRooms.has(room.id) ? "Mark as unpaid" : "Mark as paid"}
                       title={paidRooms.has(room.id) ? "Paid" : "Not paid"}
                     >
@@ -841,29 +862,55 @@ export default function Home() {
               }}
               className="w-full cursor-pointer text-left"
             >
-              <h2 className="text-lg font-semibold text-blue-600">Վերցրած</h2>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold text-blue-600">Վերցրած</h2>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeletedVercrac((prev) => !prev);
+                  }}
+                  className="flex-shrink-0 rounded p-1 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                  aria-label={showDeletedVercrac ? "Hide deleted items" : "Show deleted items"}
+                  title={showDeletedVercrac ? "Hide deleted items" : "Show deleted items"}
+                >
+                  {showDeletedVercrac ? (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  )}
+                </button>
+              </div>
               {vercracList.length > 0 && (
                 <ul className="mt-2 space-y-2 text-sm text-slate-600">
-                  {vercracList.map((item, i) => (
-                    <li key={item.id} className="flex items-start justify-between gap-2 border-b border-slate-100 pb-1 last:border-0 last:pb-0">
-                      <span className={`flex-1 font-semibold text-slate-700 ${item.deleted ? "line-through opacity-60" : ""}`}>{item.text}</span>
-                      {!item.deleted && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setVercracDeleteIndex(i);
-                          }}
-                          className="flex-shrink-0 rounded p-0.5 text-slate-400 transition hover:bg-red-100 hover:text-red-600"
-                          aria-label="Remove"
-                        >
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
-                    </li>
-                  ))}
+                  {(showDeletedVercrac ? vercracList : vercracList.filter((item) => !item.deleted)).map((item) => {
+                    const realIndex = vercracList.findIndex((x) => x.id === item.id);
+                    return (
+                      <li key={item.id} className="flex items-start justify-between gap-2 border-b border-slate-100 pb-1 last:border-0 last:pb-0">
+                        <span className={`flex-1 font-semibold text-slate-700 ${item.deleted ? "line-through opacity-60" : ""}`}>{item.text}</span>
+                        {!item.deleted && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setVercracDeleteIndex(realIndex);
+                            }}
+                            className="flex-shrink-0 rounded p-0.5 text-slate-400 transition hover:bg-red-100 hover:text-red-600"
+                            aria-label="Remove"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
@@ -885,29 +932,55 @@ export default function Home() {
               }}
               className="w-full cursor-pointer text-left"
             >
-              <h2 className="text-lg font-semibold text-red-600">Պահած</h2>
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-lg font-semibold text-red-600">Պահած</h2>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDeletedPahac((prev) => !prev);
+                  }}
+                  className="flex-shrink-0 rounded p-1 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                  aria-label={showDeletedPahac ? "Hide deleted items" : "Show deleted items"}
+                  title={showDeletedPahac ? "Hide deleted items" : "Show deleted items"}
+                >
+                  {showDeletedPahac ? (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  ) : (
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  )}
+                </button>
+              </div>
               {pahacList.length > 0 && (
                 <ul className="mt-2 space-y-2 text-sm text-slate-600">
-                  {pahacList.map((item, i) => (
-                    <li key={item.id} className="flex items-start justify-between gap-2 border-b border-slate-100 pb-1 last:border-0 last:pb-0">
-                      <span className={`flex-1 font-semibold text-slate-700 ${item.deleted ? "line-through opacity-60" : ""}`}>{item.text}</span>
-                      {!item.deleted && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPahacDeleteIndex(i);
-                          }}
-                          className="flex-shrink-0 rounded p-0.5 text-slate-400 transition hover:bg-red-100 hover:text-red-600"
-                          aria-label="Remove"
-                        >
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      )}
-                    </li>
-                  ))}
+                  {(showDeletedPahac ? pahacList : pahacList.filter((item) => !item.deleted)).map((item) => {
+                    const realIndex = pahacList.findIndex((x) => x.id === item.id);
+                    return (
+                      <li key={item.id} className="flex items-start justify-between gap-2 border-b border-slate-100 pb-1 last:border-0 last:pb-0">
+                        <span className={`flex-1 font-semibold text-slate-700 ${item.deleted ? "line-through opacity-60" : ""}`}>{item.text}</span>
+                        {!item.deleted && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setPahacDeleteIndex(realIndex);
+                            }}
+                            className="flex-shrink-0 rounded p-0.5 text-slate-400 transition hover:bg-red-100 hover:text-red-600"
+                            aria-label="Remove"
+                          >
+                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>

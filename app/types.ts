@@ -19,6 +19,7 @@ export type HistoryEntry = {
   durationMs: number;
   priceAmd: number;
   pricePerHourAmd: number;
+  paidByCard?: boolean;
   createdAt?: string;
 };
 
@@ -31,6 +32,8 @@ export type PendingStop = {
   basePrice: number;
   pricePerHour: number;
   manualPrice: number;
+  /** True when the session had an end time set on the main screen (e.g. via "Set start time"). */
+  hadScheduledEndTime?: boolean;
 };
 
 export const formatDuration = (ms: number) => {
@@ -44,4 +47,16 @@ export const formatDuration = (ms: number) => {
 
 export const formatDateTime = (value: Date | null) =>
   value ? value.toLocaleString() : "—";
+
+export const formatTimeOnly = (value: Date | null) =>
+  value ? value.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }) : "—";
+
+/** Date and time with month (e.g. "14 Mar 15:30") */
+export const formatDateTimeWithMonthAndWeek = (value: Date | null) => {
+  if (!value) return "—";
+  const day = value.getDate();
+  const month = value.toLocaleString("en", { month: "short" });
+  const time = value.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${day} ${month} ${time}`;
+};
 

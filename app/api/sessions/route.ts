@@ -29,6 +29,7 @@ export async function POST(req: Request) {
       durationMs,
       priceAmd,
       pricePerHourAmd,
+      paidByCard,
     } = body;
 
     if (
@@ -43,15 +44,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
+    // Ensure integers: BigInt() throws on floats, Prisma Int expects whole numbers
+    const durationMsInt = Math.floor(Number(durationMs));
+    const priceAmdInt = Math.round(Number(priceAmd));
+    const pricePerHourAmdInt = Math.round(Number(pricePerHourAmd));
+
     const session = await prisma.session.create({
       data: {
         roomId,
         roomName,
         start: new Date(start),
         end: new Date(end),
-        durationMs: BigInt(durationMs),
-        priceAmd,
-        pricePerHourAmd,
+        durationMs: BigInt(durationMsInt),
+        priceAmd: priceAmdInt,
+        pricePerHourAmd: pricePerHourAmdInt,
+        paidByCard: Boolean(paidByCard),
       },
     });
 

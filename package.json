@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:push": "node --experimental-wasm-reftypes ./node_modules/prisma/build/index.js db push",
+    "db:generate": "node --experimental-wasm-reftypes ./node_modules/prisma/build/index.js generate"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",

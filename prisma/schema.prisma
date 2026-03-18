@@ -16,6 +16,7 @@ model Session {
   durationMs       BigInt
   priceAmd         Int
   pricePerHourAmd  Int
+  paidByCard       Boolean  @default(false)
   createdAt        DateTime @default(now())
 }
 

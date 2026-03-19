@@ -24,3 +24,41 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes start-to-stop {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(6px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.03) translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-start-to-stop {
+  animation: start-to-stop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes stop-to-start {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(-6px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.03) translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-stop-to-start {
+  animation: stop-to-start 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}

@@ -325,76 +325,76 @@ export default function AdminPage() {
 
   if (!isAuthed) {
     return (
-      <div className="relative flex min-h-screen justify-between gap-4 px-4 py-10 text-slate-900">
+      <div className="relative flex min-h-screen justify-center px-4 py-10 text-slate-100">
         <div
           className="absolute inset-0"
           style={{
-            background: `
-              linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1f1f1f 100%),
-              radial-gradient(ellipse 70% 60% at 50% 50%, rgba(60, 60, 60, 0.4) 0%, transparent 70%)
-            `,
+            backgroundImage: "url('/stadium-bg.png')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
           }}
           aria-hidden
         />
         <div className="relative z-10 flex flex-1 items-center justify-center">
-          <main className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg ring-1 ring-slate-200/80">
-          <div className="mb-6 flex flex-col gap-2">
-            <p className="text-sm uppercase tracking-[0.2em] text-slate-500">Admin Access</p>
-            <h1 className="text-3xl font-semibold text-slate-900">Login</h1>
-            <p className="text-sm text-slate-600">
-              Enter admin or viewer password to access the panel.
-            </p>
-          </div>
-          <div className="space-y-3">
-            <label className="block text-sm font-medium text-slate-700">
-              Password
-              <input
-                type="password"
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
-              />
-            </label>
-            {loginError && <p className="text-sm text-red-600">{loginError}</p>}
-            <button
-              onClick={handleLogin}
-              className="w-full rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
-            >
-              Login as admin
-            </button>
-            <Link
-              href="/"
-              className="block w-full rounded-full border border-slate-300 px-4 py-2 text-center text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
-            >
-              Go to rooms
-            </Link>
-          </div>
-        </main>
+          <main className="w-full max-w-md rounded-xl border border-white/10 bg-black/25 p-8 backdrop-blur-sm">
+            <div className="mb-6 flex flex-col gap-2">
+              <p className="text-sm uppercase tracking-[0.2em] text-slate-400">Admin Access</p>
+              <h1 className="text-3xl font-semibold text-slate-100">Login</h1>
+              <p className="text-sm text-slate-300">
+                Enter admin or viewer password to access the panel.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-slate-200">
+                Password
+                <input
+                  type="password"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+                  className="mt-1 w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-400 focus:border-indigo-400 focus:outline-none"
+                />
+              </label>
+              {loginError && <p className="text-sm text-red-400">{loginError}</p>}
+              <button
+                onClick={handleLogin}
+                className="w-full rounded-xl bg-[linear-gradient(to_right,#1e3a8a,#8B5CF6)] px-4 py-2 text-sm font-semibold text-white shadow-[0_4px_14px_0_rgba(65,105,225,0.4)] transition hover:opacity-90"
+              >
+                Login as admin
+              </button>
+              <Link
+                href="/"
+                className="block w-full rounded-full border border-white/30 bg-white/10 px-4 py-2 text-center text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-white/20"
+              >
+                Go to rooms
+              </Link>
+            </div>
+          </main>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative flex min-h-screen justify-between gap-4 px-4 py-10 text-slate-900">
+    <div className="relative flex min-h-screen justify-between gap-4 px-4 py-10 text-slate-100">
       <div
         className="absolute inset-0"
         style={{
-          background: `
-            linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #1f1f1f 100%),
-            radial-gradient(ellipse 70% 60% at 50% 50%, rgba(60, 60, 60, 0.4) 0%, transparent 70%)
-          `,
+          backgroundImage: "url('/stadium-bg.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
         }}
         aria-hidden
       />
       <div className="relative z-10 flex flex-1 items-stretch justify-center overflow-hidden">
-        <main className="w-full max-w-5xl overflow-auto rounded-2xl bg-white p-8 shadow-lg ring-1 ring-slate-200/80">
+        <main className="w-full max-w-5xl overflow-auto rounded-xl border border-white/10 bg-black/25 p-8 backdrop-blur-sm">
         <div className="relative mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Link
               href="/"
-              className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+              className="rounded-full border border-white/30 bg-white/10 px-4 py-2 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-white/20"
             >
               Go to rooms
             </Link>
@@ -402,7 +402,7 @@ export default function AdminPage() {
           <div className="flex-1" />
           <button
             onClick={handleLogout}
-            className="absolute right-0 top-0 rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+            className="absolute right-0 top-0 rounded-lg p-2 text-slate-300 transition hover:bg-white/20 hover:text-white"
             title="Log out"
             aria-label="Log out"
           >
@@ -413,14 +413,14 @@ export default function AdminPage() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="mb-6 border-b border-slate-200">
+        <div className="mb-6 border-b border-white/20">
           <nav className="flex gap-4">
             <button
               onClick={() => setAdminTab("history")}
               className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${
                 adminTab === "history"
-                  ? "border-indigo-600 text-indigo-600"
-                  : "border-transparent text-slate-600 hover:text-slate-900"
+                  ? "border-indigo-400 text-slate-100"
+                  : "border-transparent text-slate-400 hover:text-slate-200"
               }`}
             >
               History
@@ -430,8 +430,8 @@ export default function AdminPage() {
                 onClick={() => setAdminTab("settings")}
                 className={`border-b-2 px-4 py-3 text-sm font-semibold transition ${
                   adminTab === "settings"
-                    ? "border-indigo-600 text-indigo-600"
-                    : "border-transparent text-slate-600 hover:text-slate-900"
+                    ? "border-indigo-400 text-slate-100"
+                    : "border-transparent text-slate-400 hover:text-slate-200"
                 }`}
               >
                 Settings
@@ -452,15 +452,15 @@ export default function AdminPage() {
                 .filter((e) => e.paidByCard)
                 .reduce((sum, e) => sum + e.priceAmd, 0);
               return (
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-md">
-            <div className="flex flex-col gap-4 border-b border-slate-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="rounded-xl border border-white/10 bg-black/20 backdrop-blur-sm">
+            <div className="flex flex-col gap-4 border-b border-white/10 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col gap-0.5">
-                <p className="text-sm font-semibold text-slate-800">
-                  Cash: <span className="text-emerald-700">AMD {totalCash.toFixed(2)}</span>
-                  <span className="text-slate-600"> + (AMD {inProgressPaidSum.toFixed(0)})</span>
+                <p className="text-sm font-semibold text-slate-200">
+                  Cash: <span className="text-emerald-400">AMD {totalCash.toFixed(2)}</span>
+                  <span className="text-slate-400"> + (AMD {inProgressPaidSum.toFixed(0)})</span>
                 </p>
-                <p className="text-sm font-semibold text-slate-800">
-                  Card: <span className="text-blue-600">AMD {totalCard.toFixed(2)}</span>
+                <p className="text-sm font-semibold text-slate-200">
+                  Card: <span className="text-blue-400">AMD {totalCard.toFixed(2)}</span>
                 </p>
               </div>
               <div className="flex items-center gap-3">
@@ -468,13 +468,13 @@ export default function AdminPage() {
                   type="date"
                   value={filterDate}
                   onChange={(e) => setFilterDate(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+                  className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-slate-100 focus:border-indigo-400 focus:outline-none [color-scheme:dark]"
                   aria-label="Filter by date"
                 />
                 {filterDate && (
                   <button
                     onClick={() => setFilterDate("")}
-                    className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                    className="rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/20"
                   >
                     Clear
                   </button>
@@ -489,19 +489,19 @@ export default function AdminPage() {
 
               if (historyLoading) {
                 return (
-                  <p className="px-6 py-4 text-sm text-slate-600">Loading history…</p>
+                  <p className="px-6 py-4 text-sm text-slate-400">Loading history…</p>
                 );
               }
 
               if (historyError) {
                 return (
-                  <p className="px-6 py-4 text-sm text-red-600">{historyError}</p>
+                  <p className="px-6 py-4 text-sm text-red-400">{historyError}</p>
                 );
               }
 
               if (history.length === 0) {
                 return (
-                  <p className="px-6 py-4 text-sm text-slate-600">
+                  <p className="px-6 py-4 text-sm text-slate-400">
                     No finished sessions yet. Stop a room to record it.
                   </p>
                 );
@@ -509,7 +509,7 @@ export default function AdminPage() {
 
               if (filteredHistory.length === 0 && filterDate) {
                 return (
-                  <p className="px-6 py-4 text-sm text-slate-600">
+                  <p className="px-6 py-4 text-sm text-slate-400">
                     No sessions found for the selected date.
                   </p>
                 );
@@ -517,16 +517,16 @@ export default function AdminPage() {
 
               return (
                 <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm text-slate-800">
-                    <thead className="bg-slate-50">
-                      <tr className="border-b border-slate-200">
-                        <th className="px-4 py-3 text-left font-semibold">Room</th>
-                        <th className="px-4 py-3 text-left font-semibold">Start</th>
-                        <th className="px-4 py-3 text-left font-semibold">End</th>
-                        <th className="px-4 py-3 text-left font-semibold">Elapsed</th>
-                        <th className="px-4 py-3 text-left font-semibold">Price (AMD)</th>
+                  <table className="min-w-full text-sm text-slate-200">
+                    <thead className="bg-black/20">
+                      <tr className="border-b border-white/10">
+                        <th className="px-4 py-3 text-left font-semibold text-slate-200">Room</th>
+                        <th className="px-4 py-3 text-left font-semibold text-slate-200">Start</th>
+                        <th className="px-4 py-3 text-left font-semibold text-slate-200">End</th>
+                        <th className="px-4 py-3 text-left font-semibold text-slate-200">Elapsed</th>
+                        <th className="px-4 py-3 text-left font-semibold text-slate-200">Price (AMD)</th>
                         {userRole === "admin" && (
-                          <th className="px-4 py-3 text-left font-semibold">Actions</th>
+                          <th className="px-4 py-3 text-left font-semibold text-slate-200">Actions</th>
                         )}
                       </tr>
                     </thead>
@@ -534,29 +534,29 @@ export default function AdminPage() {
                       {filteredHistory.map((entry) => (
                         <tr
                           key={entry.id}
-                          className="border-b border-slate-100 transition hover:bg-slate-50"
+                          className="border-b border-white/10 transition hover:bg-white/5"
                         >
-                          <td className="px-4 py-3 font-semibold text-indigo-700">
+                          <td className="px-4 py-3 font-semibold text-indigo-300">
                             {entry.roomName}
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 text-slate-300">
                             {filterDate
                               ? formatTimeOnly(new Date(entry.start))
                               : formatDateTimeWithMonthAndWeek(new Date(entry.start))}
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 text-slate-300">
                             {filterDate
                               ? formatTimeOnly(new Date(entry.end))
                               : formatDateTimeWithMonthAndWeek(new Date(entry.end))}
                           </td>
-                          <td className="px-4 py-3 font-mono text-slate-700">
+                          <td className="px-4 py-3 font-mono text-slate-300">
                             {formatDuration(entry.durationMs)}
                           </td>
-                          <td className="px-4 py-3 font-semibold text-emerald-700">
+                          <td className="px-4 py-3 font-semibold text-emerald-400">
                             <span className="inline-flex items-center gap-1.5">
                               AMD {entry.priceAmd.toFixed(2)}
                               {entry.paidByCard && (
-                                <svg className="h-7 w-8 shrink-0 text-blue-600" viewBox="0 0 48 48" fill="currentColor" aria-label="Card payment">
+                                <svg className="h-7 w-8 shrink-0 text-blue-400" viewBox="0 0 48 48" fill="currentColor" aria-label="Card payment">
                                   <path d="M43,8H5a2.9,2.9,0,0,0-3,3V37a2.9,2.9,0,0,0,3,3H43a2.9,2.9,0,0,0,3-3V11A2.9,2.9,0,0,0,43,8ZM42,36H6V12H42Z" />
                                   <path d="M30.6,28.9H33l.3-.2c.3-.7.4-1.2.5-1.3h3.4a6.1,6.1,0,0,1,.3,1.3l.3.2h1.9c.1,0,.2,0,.2-.1a.4.4,0,0,0,.1-.3l-2.1-9.3c0-.2-.1-.3-.2-.3H35.8a1.4,1.4,0,0,0-1.4.9l-3.8,8.7C30.5,28.7,30.6,28.8,30.6,28.9ZM36,21.7l.2.9.6,2.9H34.6Z" />
                                   <path d="M23.3,28.5a10,10,0,0,0,2.6.5h0c2.8,0,4.5-1.3,4.6-3.3s-.7-2-2.2-2.6-1.5-.8-1.5-1.2.5-.9,1.5-.9h.1a3.2,3.2,0,0,1,1.7.4h.3c.1,0,.1-.1.1-.2l.3-1.4a.5.5,0,0,0-.2-.4,9.5,9.5,0,0,0-2.1-.3c-2.6,0-4.4,1.3-4.4,3.2s1.3,2.2,2.3,2.6,1.3.8,1.3,1.2-.8,1-1.5,1a5.7,5.7,0,0,1-2.4-.5.2.2,0,0,0-.3,0c-.1,0-.1.1-.2.2l-.2,1.5C23.1,28.3,23.1,28.5,23.3,28.5Z" />
@@ -571,7 +571,7 @@ export default function AdminPage() {
                             <td className="px-4 py-3">
                               <button
                                 onClick={() => setDeleteConfirmEntry(entry)}
-                                className="rounded-lg border border-red-300 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50"
+                                className="rounded-lg border border-red-400/50 px-3 py-1.5 text-xs font-semibold text-red-400 transition hover:bg-red-500/20"
                                 title="Delete this session"
                               >
                                 Delete
@@ -590,14 +590,14 @@ export default function AdminPage() {
 
         {/* Settings Tab */}
         {adminTab === "settings" && (
-          <div className="rounded-2xl border border-slate-200 bg-white shadow-md">
-            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+          <div className="rounded-xl border border-white/10 bg-black/20 backdrop-blur-sm">
+            <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">
+                <p className="text-xs font-semibold uppercase tracking-wide text-indigo-400">
                   Settings
                 </p>
-                <h2 className="text-xl font-semibold text-slate-900">Room Prices</h2>
-                <p className="text-xs text-slate-500">Set hourly rate for each room</p>
+                <h2 className="text-xl font-semibold text-slate-100">Room Prices</h2>
+                <p className="text-xs text-slate-400">Set hourly rate for each room</p>
               </div>
             </div>
             <div className="p-6">
@@ -605,10 +605,10 @@ export default function AdminPage() {
                 {rooms.map((room) => (
                   <div
                     key={room.id}
-                    className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-4"
+                    className="flex items-center justify-between rounded-lg border border-white/10 bg-black/20 p-4"
                   >
                     <div className="flex items-center justify-between gap-2">
-                      <label className="text-sm font-medium text-slate-700">
+                      <label className="text-sm font-medium text-slate-200">
                         {room.name}
                       </label>
                       {room.name === "Barc" ? (
@@ -630,44 +630,50 @@ export default function AdminPage() {
                           className="h-16 w-16 flex-shrink-0 object-contain"
                         />
                       ) : room.name === "VIP" ? (
-                        <span className="inline-flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white p-1.5">
-                          <img
-                            src="/logos/vip.png"
-                            alt=""
-                            className="h-16 w-16 object-contain"
-                          />
-                        </span>
+                        <img
+                          src="/logos/vip.png"
+                          alt=""
+                          className="h-16 w-16 flex-shrink-0 object-contain"
+                        />
                       ) : room.name === "Green" ? (
-                        <span className="h-16 w-16 flex-shrink-0 rounded-full bg-green-500" />
+                        <img
+                          src="/logos/green.svg"
+                          alt=""
+                          className="h-16 w-16 flex-shrink-0 object-contain"
+                        />
                       ) : room.name === "Blue" ? (
-                        <span className="h-16 w-16 flex-shrink-0 rounded-full bg-blue-500" />
+                        <img
+                          src="/logos/blue.svg"
+                          alt=""
+                          className="h-16 w-16 flex-shrink-0 object-contain"
+                        />
                       ) : (
                         <LogoIcon className="h-16 w-16 flex-shrink-0" />
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">AMD</span>
+                      <span className="text-xs text-slate-400">AMD</span>
                       <input
                         type="number"
                         min="0"
                         step="1"
                         value={room.pricePerHour}
                         onChange={(e) => handlePriceChange(room.id, e.target.value)}
-                        className="w-24 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 focus:border-indigo-500 focus:outline-none"
+                        className="w-24 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium text-slate-100 focus:border-indigo-400 focus:outline-none"
                         aria-label={`${room.name} hourly price`}
                       />
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-6 flex items-center justify-between border-t border-slate-200 pt-6">
+              <div className="mt-6 flex items-center justify-between border-t border-white/10 pt-6">
                 {saveMessage && (
-                  <p className="text-sm font-medium text-emerald-600">{saveMessage}</p>
+                  <p className="text-sm font-medium text-emerald-400">{saveMessage}</p>
                 )}
                 {!saveMessage && <div />}
                 <button
                   onClick={handleSavePrices}
-                  className="rounded-full bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+                  className="rounded-xl bg-[linear-gradient(to_right,#1e3a8a,#8B5CF6)] px-6 py-2 text-sm font-semibold text-white shadow-[0_4px_14px_0_rgba(65,105,225,0.4)] transition hover:opacity-90"
                 >
                   Save Prices
                 </button>
@@ -679,15 +685,15 @@ export default function AdminPage() {
       </div>
 
       {adminTab === "history" && (
-        <aside className="relative z-10 hidden w-64 flex-shrink-0 flex-col border-l border-slate-200 bg-white/95 shadow-sm backdrop-blur-sm xl:flex">
-          <div className="flex flex-1 flex-col gap-0 p-4">
-            <section className="rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+        <aside className="sticky top-0 z-10 hidden w-56 flex-shrink-0 flex-col self-start border-l border-white/20 bg-black/25 p-4 backdrop-blur-sm xl:flex">
+          <div className="flex flex-1 flex-col gap-3">
+            <section className="rounded-lg border border-white/20 bg-black/20 p-3 backdrop-blur-sm">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-lg font-semibold text-blue-600">Վերցրած</h2>
+                <h2 className="text-lg font-semibold text-blue-300">Վերցրած</h2>
                 <button
                   type="button"
                   onClick={() => setShowDeletedVercrac((prev) => !prev)}
-                  className="flex-shrink-0 rounded p-1 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                  className="flex-shrink-0 rounded p-1 text-slate-400 transition hover:bg-white/20 hover:text-slate-200"
                   aria-label={showDeletedVercrac ? "Hide deleted items" : "Show deleted items"}
                   title={showDeletedVercrac ? "Hide deleted items" : "Show deleted items"}
                 >
@@ -703,30 +709,30 @@ export default function AdminPage() {
                   )}
                 </button>
               </div>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="mt-0.5 text-xs text-slate-400">
                 {filterDate ? `Day ${filterDate}` : "Select a date"}
               </p>
               {historyVercracList.length > 0 ? (
-                <ul className="mt-2 space-y-2 text-sm text-slate-600">
+                <ul className="mt-2 space-y-2 text-sm text-slate-300">
                   {(showDeletedVercrac ? historyVercracList : historyVercracList.filter((item) => !item.deleted)).map((item, i) => (
-                    <li key={item.id ?? i} className="border-b border-slate-100 pb-1.5 last:border-0 last:pb-0">
-                      <span className={`font-medium text-slate-700 ${item.deleted ? "line-through opacity-60" : ""}`}>
+                    <li key={item.id ?? i} className="border-b border-white/10 pb-1.5 last:border-0 last:pb-0">
+                      <span className={`font-medium text-slate-200 ${item.deleted ? "line-through opacity-60" : ""}`}>
                         {item.text}
                       </span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="mt-2 text-sm text-slate-500">No items for this day.</p>
+                <p className="mt-2 text-sm text-slate-400">No items for this day.</p>
               )}
             </section>
-            <section className="mt-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+            <section className="rounded-lg border border-white/20 bg-black/20 p-3 backdrop-blur-sm">
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-lg font-semibold text-red-600">Պահած</h2>
+                <h2 className="text-lg font-semibold text-red-300">Պահած</h2>
                 <button
                   type="button"
                   onClick={() => setShowDeletedPahac((prev) => !prev)}
-                  className="flex-shrink-0 rounded p-1 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                  className="flex-shrink-0 rounded p-1 text-slate-400 transition hover:bg-white/20 hover:text-slate-200"
                   aria-label={showDeletedPahac ? "Hide deleted items" : "Show deleted items"}
                   title={showDeletedPahac ? "Hide deleted items" : "Show deleted items"}
                 >
@@ -742,21 +748,21 @@ export default function AdminPage() {
                   )}
                 </button>
               </div>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="mt-0.5 text-xs text-slate-400">
                 {filterDate ? `Day ${filterDate}` : "Select a date"}
               </p>
               {historyPahacList.length > 0 ? (
-                <ul className="mt-2 space-y-2 text-sm text-slate-600">
+                <ul className="mt-2 space-y-2 text-sm text-slate-300">
                   {(showDeletedPahac ? historyPahacList : historyPahacList.filter((item) => !item.deleted)).map((item, i) => (
-                    <li key={item.id ?? i} className="border-b border-slate-100 pb-1.5 last:border-0 last:pb-0">
-                      <span className={`font-medium text-slate-700 ${item.deleted ? "line-through opacity-60" : ""}`}>
+                    <li key={item.id ?? i} className="border-b border-white/10 pb-1.5 last:border-0 last:pb-0">
+                      <span className={`font-medium text-slate-200 ${item.deleted ? "line-through opacity-60" : ""}`}>
                         {item.text}
                       </span>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="mt-2 text-sm text-slate-500">No items for this day.</p>
+                <p className="mt-2 text-sm text-slate-400">No items for this day.</p>
               )}
             </section>
           </div>
@@ -776,30 +782,30 @@ export default function AdminPage() {
             onClick={() => setDeleteConfirmEntry(null)}
             aria-hidden
           />
-          <div className="relative w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl ring-1 ring-slate-200/80">
+          <div className="relative w-full max-w-md rounded-xl border border-white/10 bg-black/25 p-6 backdrop-blur-sm">
             <div className="flex items-start gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-100">
-                <svg className="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-red-500/20">
+                <svg className="h-6 w-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <h2 id="delete-modal-title" className="text-lg font-semibold text-slate-900">
+                <h2 id="delete-modal-title" className="text-lg font-semibold text-slate-100">
                   Delete session?
                 </h2>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="mt-1 text-sm text-slate-300">
                   This action cannot be undone. The session will be permanently removed from history.
                 </p>
-                <div className="mt-4 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                  <p><span className="font-medium text-slate-500">Room:</span> {deleteConfirmEntry.roomName}</p>
-                  <p className="mt-1"><span className="font-medium text-slate-500">Start – End:</span> {formatTimeOnly(new Date(deleteConfirmEntry.start))} – {formatTimeOnly(new Date(deleteConfirmEntry.end))}</p>
-                  <p className="mt-1"><span className="font-medium text-slate-500">Price:</span> AMD {deleteConfirmEntry.priceAmd.toFixed(2)}</p>
+                <div className="mt-4 rounded-lg border border-white/10 bg-black/20 px-4 py-3 text-sm text-slate-200">
+                  <p><span className="font-medium text-slate-400">Room:</span> {deleteConfirmEntry.roomName}</p>
+                  <p className="mt-1"><span className="font-medium text-slate-400">Start – End:</span> {formatTimeOnly(new Date(deleteConfirmEntry.start))} – {formatTimeOnly(new Date(deleteConfirmEntry.end))}</p>
+                  <p className="mt-1"><span className="font-medium text-slate-400">Price:</span> AMD {deleteConfirmEntry.priceAmd.toFixed(2)}</p>
                 </div>
                 <div className="mt-6 flex gap-3">
                   <button
                     type="button"
                     onClick={() => setDeleteConfirmEntry(null)}
-                    className="flex-1 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                    className="flex-1 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-slate-200 transition hover:bg-white/20"
                   >
                     Cancel
                   </button>

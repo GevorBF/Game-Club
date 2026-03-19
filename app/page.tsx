@@ -560,41 +560,83 @@ export default function Home() {
       setTransferFromRoomId(null);
       return;
     }
+    const target = rooms.find((r) => r.id === targetRoomId);
+    const isSwap = target?.isRunning === true;
+
     setRooms((prev) => {
-      const next = prev.map((room) => {
-        if (room.id === transferFromRoomId) {
-          return {
-            ...room,
-            startTime: null,
-            startTimeRecordedAt: null,
-            endTime: null,
-            elapsedMs: 0,
-            totalPrice: 0,
-            isRunning: false,
-          };
-        }
-        if (room.id === targetRoomId) {
-          return {
-            ...room,
-            startTime: source.startTime,
-            startTimeRecordedAt: source.startTimeRecordedAt,
-            endTime: source.endTime,
-            elapsedMs: source.elapsedMs,
-            totalPrice: source.totalPrice,
-            pricePerHour: source.pricePerHour,
-            isRunning: true,
-          };
-        }
-        return room;
-      });
+      const targetRoom = prev.find((r) => r.id === targetRoomId);
+      const sourceRoom = prev.find((r) => r.id === transferFromRoomId);
+      if (!sourceRoom?.isRunning || !sourceRoom.startTime) return prev;
+
+      let next: typeof prev;
+      if (isSwap && targetRoom?.isRunning && targetRoom.startTime) {
+        // Swap sessions between source and target
+        next = prev.map((room) => {
+          if (room.id === transferFromRoomId) {
+            return {
+              ...room,
+              startTime: targetRoom.startTime,
+              startTimeRecordedAt: targetRoom.startTimeRecordedAt ?? null,
+              endTime: targetRoom.endTime,
+              elapsedMs: targetRoom.elapsedMs,
+              totalPrice: targetRoom.totalPrice,
+              pricePerHour: targetRoom.pricePerHour,
+              isRunning: true,
+            };
+          }
+          if (room.id === targetRoomId) {
+            return {
+              ...room,
+              startTime: sourceRoom.startTime,
+              startTimeRecordedAt: sourceRoom.startTimeRecordedAt ?? null,
+              endTime: sourceRoom.endTime,
+              elapsedMs: sourceRoom.elapsedMs,
+              totalPrice: sourceRoom.totalPrice,
+              pricePerHour: sourceRoom.pricePerHour,
+              isRunning: true,
+            };
+          }
+          return room;
+        });
+      } else {
+        // Move session to inactive target
+        next = prev.map((room) => {
+          if (room.id === transferFromRoomId) {
+            return {
+              ...room,
+              startTime: null,
+              startTimeRecordedAt: null,
+              endTime: null,
+              elapsedMs: 0,
+              totalPrice: 0,
+              isRunning: false,
+            };
+          }
+          if (room.id === targetRoomId) {
+            return {
+              ...room,
+              startTime: sourceRoom.startTime,
+              startTimeRecordedAt: sourceRoom.startTimeRecordedAt ?? null,
+              endTime: sourceRoom.endTime,
+              elapsedMs: sourceRoom.elapsedMs,
+              totalPrice: sourceRoom.totalPrice,
+              pricePerHour: sourceRoom.pricePerHour,
+              isRunning: true,
+            };
+          }
+          return room;
+        });
+      }
       if (typeof window !== "undefined") {
         try {
           const running: Record<string, { startTime: string; endTime: string | null; pricePerHour: number }> = {};
           next.forEach((room) => {
             if (room.isRunning && room.startTime) {
+              const st = room.startTime instanceof Date ? room.startTime : new Date(room.startTime as unknown as string);
+              const et = room.endTime ? (room.endTime instanceof Date ? room.endTime : new Date(room.endTime as unknown as string)) : null;
               running[String(room.id)] = {
-                startTime: room.startTime.toISOString(),
-                endTime: room.endTime ? room.endTime.toISOString() : null,
+                startTime: st.toISOString(),
+                endTime: et ? et.toISOString() : null,
                 pricePerHour: room.pricePerHour,
               };
             }
@@ -606,13 +648,47 @@ export default function Home() {
       }
       return next;
     });
+
     setHookahClickedRooms((prev) => {
       const next = new Set(prev);
-      if (next.has(transferFromRoomId)) {
-        next.delete(transferFromRoomId);
-        next.add(targetRoomId);
+      if (isSwap) {
+        const sourceHad = next.has(transferFromRoomId);
+        const targetHad = next.has(targetRoomId);
+        if (sourceHad && !targetHad) {
+          next.delete(transferFromRoomId);
+          next.add(targetRoomId);
+        } else if (!sourceHad && targetHad) {
+          next.delete(targetRoomId);
+          next.add(transferFromRoomId);
+        }
+      } else {
+        if (next.has(transferFromRoomId)) {
+          next.delete(transferFromRoomId);
+          next.add(targetRoomId);
+        }
       }
       persistHookahRooms(next);
+      return next;
+    });
+    setPaidRooms((prev) => {
+      const next = new Set(prev);
+      if (isSwap) {
+        const sourceHad = next.has(transferFromRoomId);
+        const targetHad = next.has(targetRoomId);
+        if (sourceHad && !targetHad) {
+          next.delete(transferFromRoomId);
+          next.add(targetRoomId);
+        } else if (!sourceHad && targetHad) {
+          next.delete(targetRoomId);
+          next.add(transferFromRoomId);
+        }
+      } else {
+        if (next.has(transferFromRoomId)) {
+          next.delete(transferFromRoomId);
+          next.add(targetRoomId);
+        }
+      }
+      persistPaidRooms(next);
       return next;
     });
     setTransferFromRoomId(null);
@@ -622,11 +698,11 @@ export default function Home() {
   const totalRunningPrice = runningRooms.reduce((sum, r) => sum + r.totalPrice, 0);
 
   return (
-    <div className="relative flex min-h-screen text-slate-900">
+    <div className="relative flex min-h-screen text-slate-100">
       <div
-        className="absolute inset-0 bg-slate-900"
+        className="absolute inset-0"
         style={{
-          backgroundImage: "url('/main-bg.png')",
+          backgroundImage: "url('/stadium-bg.png')",
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
@@ -634,12 +710,12 @@ export default function Home() {
         aria-hidden
       />
       <div className="relative z-10 flex flex-1 flex-col items-center px-4 py-10">
-      <main className="w-full max-w-6xl rounded-2xl bg-white/95 px-10 pb-10 pt-0 shadow-lg ring-1 ring-slate-200/80 backdrop-blur-sm">
+      <div className="w-full max-w-6xl px-4 pb-10 pt-4">
         <div className="flex justify-end">
           {isAdminRole ? (
               <Link
                 href="/admin"
-                className="m-2 rounded-full border border-indigo-300 px-6 py-2 text-sm font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-50"
+                className="m-2 rounded-full border border-white/30 bg-white/10 px-6 py-2 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-white/20"
               >
                 History
               </Link>
@@ -653,7 +729,7 @@ export default function Home() {
                   }
                   router.push("/admin");
                 }}
-                className="m-2 rounded-full border border-indigo-300 px-6 py-2 text-sm font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-50"
+                className="m-2 rounded-full border border-white/30 bg-white/10 px-6 py-2 text-sm font-semibold text-slate-100 shadow-sm transition hover:bg-white/20"
               >
               History
             </button>
@@ -664,188 +740,255 @@ export default function Home() {
           {rooms.map((room) => (
             <div
               key={room.id}
-              className="relative flex h-full flex-col justify-between rounded-xl border border-slate-200 bg-slate-50/70 p-5 shadow-sm"
+              className={`relative flex h-full flex-col justify-between rounded-xl border border-white/10 bg-black/25 px-4 py-3 backdrop-blur-sm ${
+                room.isRunning
+                  ? room.endTime && room.endTime.getTime() - Date.now() < 5 * 60 * 1000
+                    ? "shadow-[0_0_56px_16px_rgba(239,68,68,0.85),0_0_24px_4px_rgba(239,68,68,0.5),0_8px_24px_rgba(0,0,0,0.5)]"
+                    : "shadow-[0_0_28px_6px_rgba(239,68,68,0.55),0_4px_12px_rgba(0,0,0,0.35)]"
+                  : "shadow-[0_0_28px_6px_rgba(34,197,94,0.55),0_4px_12px_rgba(0,0,0,0.35)]"
+              }`}
             >
-              <div className="relative mt-4 space-y-2 rounded-lg border border-slate-200 bg-white p-4">
-                <div
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-2 -translate-y-6 -translate-x-4 pointer-events-none"
+              {/* Status indicator - top right, color only */}
+              <div
+                className={`absolute right-3 top-3 h-2.5 w-2.5 rounded-full ${
+                  room.isRunning ? "bg-red-500" : "bg-green-500"
+                }`}
+                aria-hidden
+              />
+              {/* Logo and title - fixed height so texts container starts at same place on all cards */}
+              <div className="flex min-h-[4rem] items-center gap-3 px-3 pt-3 pb-1.5">
+                <button
+                  type="button"
+                  onClick={room.isRunning ? () => setTransferFromRoomId(room.id) : undefined}
+                  className={`flex items-center gap-3 ${room.isRunning ? "cursor-pointer rounded-lg transition hover:opacity-80" : "cursor-default"}`}
+                  aria-label="Transfer session to another room"
                 >
-                  <button
-                    type="button"
-                    onClick={room.isRunning ? () => setTransferFromRoomId(room.id) : undefined}
-                    className={`flex flex-col items-center justify-center gap-2 ${room.isRunning ? "pointer-events-auto cursor-pointer rounded-lg transition hover:opacity-80" : "cursor-default"}`}
-                    aria-label="Transfer session to another room"
-                  >
-                    <p className="text-sm font-semibold uppercase tracking-wide text-slate-700">
-                      {room.name}
-                    </p>
-                    {room.name === "Barc" ? (
+                  {room.name === "Barc" ? (
                     <img
                       src="/logos/barc.png"
                       alt=""
-                      className="h-10 w-10 flex-shrink-0 object-contain"
+                      className="h-12 w-12 flex-shrink-0 object-contain"
                     />
                   ) : room.name === "Real" ? (
                     <img
                       src="/logos/real.png"
                       alt=""
-                      className="h-10 w-10 flex-shrink-0 object-contain"
+                      className="h-12 w-12 flex-shrink-0 object-contain"
                     />
                   ) : room.name === "Euro" ? (
                     <img
                       src="/logos/euro.png"
                       alt=""
-                      className="h-10 w-10 flex-shrink-0 object-contain"
+                      className="h-12 w-12 flex-shrink-0 object-contain"
                     />
                   ) : room.name === "VIP" ? (
-                    <span className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white p-1">
-                      <img
-                        src="/logos/vip.png"
-                        alt=""
-                        className="h-10 w-10 object-contain"
-                      />
-                    </span>
+                    <img
+                      src="/logos/vip.png"
+                      alt=""
+                      className="h-12 w-12 flex-shrink-0 object-contain"
+                    />
                   ) : room.name === "Green" ? (
-                    <span className="h-10 w-10 flex-shrink-0 rounded-full bg-green-500" />
+                    <img
+                      src="/logos/green.svg"
+                      alt=""
+                      className="h-12 w-12 flex-shrink-0 object-contain"
+                    />
                   ) : room.name === "Blue" ? (
-                    <span className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-500" />
+                    <img
+                      src="/logos/blue.svg"
+                      alt=""
+                      className="h-12 w-12 flex-shrink-0 object-contain"
+                    />
                   ) : (
-                    <LogoIcon className="h-10 w-10 flex-shrink-0" />
+                    <LogoIcon className="h-12 w-12 flex-shrink-0" />
                   )}
-                  </button>
+                  <p className="text-sm font-semibold uppercase tracking-wide text-slate-200">
+                    {room.name}
+                  </p>
+                </button>
+              </div>
+              <div className="relative space-y-2 px-3">
+                {/* Session info - left: Started/Ends, right: Remaining countdown, bottom: two-tone progress bar */}
+                <div className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+                  <div className="flex min-h-[3.5rem] items-start justify-between gap-4">
+                    <div className="flex flex-col gap-0.5 text-left">
+                      <p className="text-sm text-white">
+                        Start {formatTimeOnly(room.startTime)}
+                      </p>
+                      <p className="flex items-center gap-1 text-sm">
+                        <span className="font-semibold text-white">End</span>
+                        <span className="text-white">
+                          {room.endTime ? formatTimeOnly(room.endTime) : "—"}
+                        </span>
+                        {room.isRunning && room.startTime && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditEndTimeRoomId(room.id);
+                              const price =
+                                room.endTime && room.startTime
+                                  ? ((room.endTime.getTime() - room.startTime.getTime()) / 3600000) * room.pricePerHour
+                                  : room.totalPrice;
+                              setEditEndTimeValue(price > 0 ? String(Math.round(price * 100) / 100) : "");
+                            }}
+                            className="rounded p-0.5 text-white transition hover:bg-white/20 hover:text-white"
+                            aria-label="Edit end time"
+                          >
+                            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex min-w-[5rem] flex-col items-end justify-end gap-0.5 text-right">
+                      {room.isRunning && room.startTime ? (
+                        <>
+                          <p className="text-xs italic text-green-400">
+                            Time
+                          </p>
+                          <p className="text-xl font-bold tabular-nums text-green-400">
+                            {room.endTime
+                              ? formatDuration(Math.max(0, room.endTime.getTime() - Date.now()))
+                              : formatDuration(room.elapsedMs)}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs italic text-white">Time</p>
+                          <p className="text-xl font-bold tabular-nums text-white">—</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {/* Progress bar or reserved space so container height stays same */}
+                  <div className="mt-2 h-2 w-full">
+                    {room.isRunning && room.startTime && room.endTime && (() => {
+                      const totalMs = room.endTime.getTime() - room.startTime.getTime();
+                      const progressPct =
+                        totalMs > 0
+                          ? Math.min(100, (room.elapsedMs / totalMs) * 100)
+                          : 100;
+                      return (
+                        <div className="flex h-full w-full overflow-hidden rounded-full">
+                          <div
+                            className="h-full rounded-l-full bg-red-500 transition-all duration-1000"
+                            style={{ width: `${progressPct}%` }}
+                          />
+                          <div
+                            className="h-full rounded-r-full bg-slate-600/80"
+                            style={{ width: `${100 - progressPct}%` }}
+                          />
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm text-slate-600">
-                  <span>Start</span>
-                  <span className="font-semibold text-slate-900">
-                    {formatTimeOnly(room.startTime)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm text-slate-600">
-                  <span className="flex items-center gap-1">
-                    End
-                    {room.isRunning && room.startTime && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditEndTimeRoomId(room.id);
-                          const price =
-                            room.endTime && room.startTime
-                              ? ((room.endTime.getTime() - room.startTime.getTime()) / 3600000) * room.pricePerHour
-                              : room.totalPrice;
-                          setEditEndTimeValue(price > 0 ? String(Math.round(price * 100) / 100) : "");
-                        }}
-                        className="rounded p-0.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-600"
-                        aria-label="Edit end time"
-                      >
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                      </button>
-                    )}
-                  </span>
-                  <span className="font-semibold text-slate-900">
-                    {room.endTime ? formatTimeOnly(room.endTime) : "—"}
-                    {room.endTime && new Date() >= room.endTime && (
-                      <span className="ml-2 text-xs text-emerald-600">(Finished)</span>
-                    )}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm text-indigo-700">
-                  <span>Time</span>
-                  <span className="text-lg font-bold">
-                    {formatDuration(room.elapsedMs)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm text-emerald-700">
-                  <span>Price</span>
-                  <div className="flex flex-shrink-0 items-center gap-1.5 -ml-1">
-                    <div
-                      className={`flex items-center justify-center rounded-lg border-2 transition-colors ${
-                        hookahClickedRooms.has(room.id) ? "border-emerald-500 bg-emerald-50/50" : "border-transparent"
-                      }`}
+                <div className="flex items-center justify-between text-sm">
+                  <div
+                    className={`flex flex-shrink-0 origin-left items-center gap-1.5 transition-all duration-200 ease-out ${
+                      room.isRunning ? "translate-x-0 scale-100 opacity-100" : "pointer-events-none translate-x-1 scale-95 opacity-0"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setHookahClickedRooms((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(room.id)) next.delete(room.id);
+                          else next.add(room.id);
+                          persistHookahRooms(next);
+                          return next;
+                        })
+                      }
+                      className="rounded p-1 transition hover:opacity-80"
+                      aria-label="Toggle hookah"
                     >
+                      <img
+                        src="/logos/hookah.svg"
+                        alt=""
+                        className={`h-6 w-6 object-contain ${
+                          hookahClickedRooms.has(room.id)
+                            ? "[filter:invert(48%)_sepia(79%)_saturate(2476%)_hue-rotate(86deg)_brightness(118%)_contrast(119%)]"
+                            : "[filter:invert(27%)_sepia(98%)_saturate(7472%)_hue-rotate(358deg)_brightness(101%)_contrast(118%)]"
+                        }`}
+                      />
+                    </button>
+                    {room.endTime && (
                       <button
                         type="button"
                         onClick={() =>
-                          setHookahClickedRooms((prev) => {
+                          setPaidRooms((prev) => {
                             const next = new Set(prev);
                             if (next.has(room.id)) next.delete(room.id);
                             else next.add(room.id);
-                            persistHookahRooms(next);
+                            persistPaidRooms(next);
                             return next;
                           })
                         }
                         className="rounded p-1 transition hover:opacity-80"
-                        aria-label="Toggle hookah"
+                        aria-label={paidRooms.has(room.id) ? "Mark as unpaid" : "Mark as paid"}
+                        title={paidRooms.has(room.id) ? "Paid" : "Not paid"}
                       >
                         <img
-                          src={hookahClickedRooms.has(room.id) ? "/logos/hookah-default.svg" : "/logos/hookah-selected.svg"}
+                          src="/logos/cash.svg"
                           alt=""
-                          className={`h-6 w-6 object-contain ${!hookahClickedRooms.has(room.id) ? "[filter:brightness(0)_saturate(100%)_invert(27%)_sepia(98%)_saturate(7472%)_hue-rotate(358deg)_brightness(101%)_contrast(118%)]" : ""}`}
+                          className={`h-8 w-8 object-contain ${
+                            paidRooms.has(room.id)
+                              ? "[filter:invert(48%)_sepia(79%)_saturate(2476%)_hue-rotate(86deg)_brightness(118%)_contrast(119%)]"
+                              : "[filter:invert(27%)_sepia(98%)_saturate(7472%)_hue-rotate(358deg)_brightness(101%)_contrast(118%)]"
+                          }`}
                         />
                       </button>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPaidRooms((prev) => {
-                          const next = new Set(prev);
-                          if (next.has(room.id)) next.delete(room.id);
-                          else next.add(room.id);
-                          persistPaidRooms(next);
-                          return next;
-                        })
-                      }
-                      className={`rounded p-1 transition hover:opacity-80 ${
-                        paidRooms.has(room.id) ? "text-emerald-600" : "text-red-500"
-                      } ${!(room.isRunning && room.endTime) ? "invisible pointer-events-none" : ""}`}
-                      aria-label={paidRooms.has(room.id) ? "Mark as unpaid" : "Mark as paid"}
-                      title={paidRooms.has(room.id) ? "Paid" : "Not paid"}
-                    >
-                      <CashIcon className="h-6 w-6" />
-                    </button>
+                    )}
                   </div>
-                  <span className="min-w-[7rem] text-right text-lg font-semibold tabular-nums">
+                  <span className="min-w-[7rem] text-right text-lg font-semibold tabular-nums text-slate-100">
                     AMD {(room.totalPrice + (hookahClickedRooms.has(room.id) ? 2000 : 0)).toFixed(2)}
                   </span>
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-3">
+              <div className="mt-3 flex flex-wrap gap-3">
                 {!room.isRunning && (
-                  <button
-                    onClick={() => {
-                      setManualStartRoom(room.id);
-                      const now = new Date();
-                      setManualStartTime(
-                        String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0"),
-                      );
-                      setManualEndTime("");
-                      setManualTargetPrice("");
-                    }}
-                    className="inline-flex w-full items-center justify-center rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
-                  >
-                    Start
-                  </button>
+                  <div className="w-full animate-stop-to-start px-4">
+                    <button
+                      onClick={() => {
+                        setManualStartRoom(room.id);
+                        const now = new Date();
+                        setManualStartTime(
+                          String(now.getHours()).padStart(2, "0") + ":" + String(now.getMinutes()).padStart(2, "0"),
+                        );
+                        setManualEndTime("");
+                        setManualTargetPrice("");
+                      }}
+                      className="inline-flex w-full items-center justify-center rounded-xl bg-[linear-gradient(to_right,#1e3a8a,#8B5CF6)] px-4 py-2 text-sm font-semibold text-white shadow-[0_4px_14px_0_rgba(65,105,225,0.4),0_2px_4px_0_rgba(0,0,0,0.3)] transition hover:opacity-90"
+                    >
+                      Start
+                    </button>
+                  </div>
                 )}
                 {room.isRunning && (
-                  <button
-                    onClick={() => handleStopRequest(room.id)}
-                    className="inline-flex w-full items-center justify-center rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700"
-                  >
-                    Stop
-                  </button>
+                  <div className="w-full animate-start-to-stop px-4">
+                    <button
+                      onClick={() => handleStopRequest(room.id)}
+                      className={`inline-flex w-full items-center justify-center rounded-xl bg-[linear-gradient(to_right,#b91c1c,#7f1d1d)] px-4 py-2 text-sm font-semibold text-white shadow-[0_4px_14px_0_rgba(185,28,28,0.4),0_2px_4px_0_rgba(0,0,0,0.3)] transition-all duration-300 hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] ${
+                        room.endTime && room.endTime.getTime() - Date.now() < 5 * 60 * 1000 ? "animate-pulse" : ""
+                      }`}
+                    >
+                      Stop
+                    </button>
+                  </div>
                 )}
               </div>
               </div>
           ))}
         </div>
-      </main>
+      </div>
       </div>
 
-      <aside className="sticky top-0 z-10 flex hidden w-56 flex-shrink-0 flex-col self-start border-l border-slate-200 bg-white/95 p-4 shadow-sm backdrop-blur-sm xl:flex">
+      <aside className="sticky top-0 z-10 flex hidden w-56 flex-shrink-0 flex-col self-start border-l border-white/20 bg-black/25 p-4 backdrop-blur-sm xl:flex">
         <div className="flex flex-col gap-3">
-          <section className="rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+          <section className="rounded-lg border border-white/20 bg-black/20 p-3 backdrop-blur-sm">
             <div
               role="button"
               tabIndex={0}
@@ -863,14 +1006,14 @@ export default function Home() {
               className="w-full cursor-pointer text-left"
             >
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-lg font-semibold text-blue-600">Վերցրած</h2>
+                <h2 className="text-lg font-semibold text-blue-300">Վերցրած</h2>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowDeletedVercrac((prev) => !prev);
                   }}
-                  className="flex-shrink-0 rounded p-1 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                  className="flex-shrink-0 rounded p-1 text-slate-400 transition hover:bg-white/20 hover:text-slate-200"
                   aria-label={showDeletedVercrac ? "Hide deleted items" : "Show deleted items"}
                   title={showDeletedVercrac ? "Hide deleted items" : "Show deleted items"}
                 >
@@ -887,12 +1030,12 @@ export default function Home() {
                 </button>
               </div>
               {vercracList.length > 0 && (
-                <ul className="mt-2 space-y-2 text-sm text-slate-600">
+                <ul className="mt-2 space-y-2 text-sm text-slate-300">
                   {(showDeletedVercrac ? vercracList : vercracList.filter((item) => !item.deleted)).map((item) => {
                     const realIndex = vercracList.findIndex((x) => x.id === item.id);
                     return (
-                      <li key={item.id} className="flex items-start justify-between gap-2 border-b border-slate-100 pb-1 last:border-0 last:pb-0">
-                        <span className={`flex-1 font-semibold text-slate-700 ${item.deleted ? "line-through opacity-60" : ""}`}>{item.text}</span>
+                      <li key={item.id} className="flex items-start justify-between gap-2 border-b border-white/10 pb-1 last:border-0 last:pb-0">
+                        <span className={`flex-1 font-semibold text-slate-200 ${item.deleted ? "line-through opacity-60" : ""}`}>{item.text}</span>
                         {!item.deleted && (
                           <button
                             type="button"
@@ -900,7 +1043,7 @@ export default function Home() {
                               e.stopPropagation();
                               setVercracDeleteIndex(realIndex);
                             }}
-                            className="flex-shrink-0 rounded p-0.5 text-slate-400 transition hover:bg-red-100 hover:text-red-600"
+                            className="flex-shrink-0 rounded p-0.5 text-slate-400 transition hover:bg-red-500/20 hover:text-red-400"
                             aria-label="Remove"
                           >
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -915,7 +1058,7 @@ export default function Home() {
               )}
             </div>
           </section>
-          <section className="rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+          <section className="rounded-lg border border-white/20 bg-black/20 p-3 backdrop-blur-sm">
             <div
               role="button"
               tabIndex={0}
@@ -933,14 +1076,14 @@ export default function Home() {
               className="w-full cursor-pointer text-left"
             >
               <div className="flex items-center justify-between gap-2">
-                <h2 className="text-lg font-semibold text-red-600">Պահած</h2>
+                <h2 className="text-lg font-semibold text-red-300">Պահած</h2>
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowDeletedPahac((prev) => !prev);
                   }}
-                  className="flex-shrink-0 rounded p-1 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                  className="flex-shrink-0 rounded p-1 text-slate-400 transition hover:bg-white/20 hover:text-slate-200"
                   aria-label={showDeletedPahac ? "Hide deleted items" : "Show deleted items"}
                   title={showDeletedPahac ? "Hide deleted items" : "Show deleted items"}
                 >
@@ -957,12 +1100,12 @@ export default function Home() {
                 </button>
               </div>
               {pahacList.length > 0 && (
-                <ul className="mt-2 space-y-2 text-sm text-slate-600">
+                <ul className="mt-2 space-y-2 text-sm text-slate-300">
                   {(showDeletedPahac ? pahacList : pahacList.filter((item) => !item.deleted)).map((item) => {
                     const realIndex = pahacList.findIndex((x) => x.id === item.id);
                     return (
-                      <li key={item.id} className="flex items-start justify-between gap-2 border-b border-slate-100 pb-1 last:border-0 last:pb-0">
-                        <span className={`flex-1 font-semibold text-slate-700 ${item.deleted ? "line-through opacity-60" : ""}`}>{item.text}</span>
+                      <li key={item.id} className="flex items-start justify-between gap-2 border-b border-white/10 pb-1 last:border-0 last:pb-0">
+                        <span className={`flex-1 font-semibold text-slate-200 ${item.deleted ? "line-through opacity-60" : ""}`}>{item.text}</span>
                         {!item.deleted && (
                           <button
                             type="button"
@@ -970,7 +1113,7 @@ export default function Home() {
                               e.stopPropagation();
                               setPahacDeleteIndex(realIndex);
                             }}
-                            className="flex-shrink-0 rounded p-0.5 text-slate-400 transition hover:bg-red-100 hover:text-red-600"
+                            className="flex-shrink-0 rounded p-0.5 text-slate-400 transition hover:bg-red-500/20 hover:text-red-400"
                             aria-label="Remove"
                           >
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1179,29 +1322,31 @@ export default function Home() {
                       key={room.id}
                       type="button"
                       onClick={() => handleTransferToRoom(room.id)}
-                      className="flex w-full items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100"
+                      className={`flex w-full items-center justify-between gap-3 rounded-lg border px-4 py-3 text-left transition ${
+                        room.isRunning
+                          ? "border-red-800/50 bg-[linear-gradient(to_right,#b91c1c,#7f1d1d)] text-white shadow-[0_2px_8px_rgba(185,28,28,0.3)] hover:opacity-90"
+                          : "border border-slate-200 bg-slate-50 hover:bg-slate-100"
+                      }`}
                     >
                       <div className="flex items-center gap-3">
                         {room.name === "Barc" ? (
-                          <img src="/logos/barc.png" alt="" className="h-10 w-10 flex-shrink-0 object-contain" />
+                          <img src="/logos/barc.png" alt="" className="h-12 w-12 flex-shrink-0 object-contain" />
                         ) : room.name === "Real" ? (
-                          <img src="/logos/real.png" alt="" className="h-10 w-10 flex-shrink-0 object-contain" />
+                          <img src="/logos/real.png" alt="" className="h-12 w-12 flex-shrink-0 object-contain" />
                         ) : room.name === "Euro" ? (
-                          <img src="/logos/euro.png" alt="" className="h-10 w-10 flex-shrink-0 object-contain" />
+                          <img src="/logos/euro.png" alt="" className="h-12 w-12 flex-shrink-0 object-contain" />
                         ) : room.name === "VIP" ? (
-                          <span className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white p-1">
-                            <img src="/logos/vip.png" alt="" className="h-10 w-10 object-contain" />
-                          </span>
+                          <img src={room.isRunning ? "/logos/vip.png" : "/logos/vip-modal.png"} alt="" className="h-12 w-12 flex-shrink-0 object-contain" />
                         ) : room.name === "Green" ? (
-                          <span className="h-10 w-10 flex-shrink-0 rounded-full bg-green-500" />
+                          <img src="/logos/green.svg" alt="" className="h-12 w-12 flex-shrink-0 object-contain" />
                         ) : room.name === "Blue" ? (
-                          <span className="h-10 w-10 flex-shrink-0 rounded-full bg-blue-500" />
+                          <img src="/logos/blue.svg" alt="" className="h-12 w-12 flex-shrink-0 object-contain" />
                         ) : (
-                          <LogoIcon className="h-10 w-10 flex-shrink-0" />
+                          <LogoIcon className="h-12 w-12 flex-shrink-0" />
                         )}
-                        <span className="font-medium text-slate-800">{room.name}</span>
+                        <span className={`font-medium ${room.isRunning ? "text-white" : "text-slate-800"}`}>{room.name}</span>
                       </div>
-                      <span className="text-sm text-slate-500">
+                      <span className={`text-sm ${room.isRunning ? "text-red-100" : "text-slate-500"}`}>
                         AMD {room.pricePerHour}
                       </span>
                     </button>
@@ -1343,7 +1488,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="mt-5 flex gap-3">
+            <div className="mt-5">
               <button
                 onClick={() => {
                   if (manualStartTime && manualStartRoom !== null) {
@@ -1351,23 +1496,9 @@ export default function Home() {
                   }
                 }}
                 disabled={!manualStartTime}
-                className="inline-flex flex-1 items-center justify-center rounded-full bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="inline-flex w-full items-center justify-center rounded-xl bg-[linear-gradient(to_right,#1e3a8a,#8B5CF6)] px-4 py-2 text-sm font-semibold text-white shadow-[0_4px_14px_0_rgba(65,105,225,0.4),0_2px_4px_0_rgba(0,0,0,0.3)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale"
               >
                 Start
-              </button>
-              <button
-                onClick={() => {
-                  setManualStartRoom(null);
-                  setManualStartTime("");
-                  setManualEndTime("");
-                  setManualTargetPrice("");
-                }}
-                className="rounded-full p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
-                aria-label="Close"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
               </button>
             </div>
           </div>
